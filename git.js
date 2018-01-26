@@ -1,10 +1,11 @@
-const { appendFileSync, mkdtempSync, readFile, writeFileSync } = require('fs');
-const { join, resolve } = require('path');
+const { appendFileSync, mkdir, mkdtempSync, readFile, writeFileSync } = require('fs');
+const { dirname, join, resolve } = require('path');
 const { tmpdir } = require('os');
 const { exec } = require('./exec');
 const { promisify } = require('util');
 
 const readFileP = promisify(readFile);
+const mkdirPromise = promisify(readFile);
 
 const {
   GH_KEY,
@@ -20,8 +21,10 @@ const setupGitSsh = new Promise(async () => {
   // Create the SSH deploy key
   writeFileSync(ID_RSA, GH_KEY.replace(/\\n/g, '\n'), { mode: 0o400 });
 
+  // Create the .ssh directory if needed
+  await mkdirPromise(dirname(SSH_CONFIG));
   // Load the existing ssh config
-  const data = await readFileP(SSH_CONFIG, 'UTF-8');
+  const data = await readFileP(SSH_CONFIG, 'UTF-8') || '';
   const hostData = `Host autorelease
     User git
     HostName github.com
