@@ -79,4 +79,29 @@ async function isPullRequest(branch) {
   return pullRequests.length > 0;
 }
 
-module.exports = { github, isPullRequest };
+/**
+ * Create a pull request on GitHub
+ *
+ * @param {object} options Options for the pull request
+ * @param {string} options.title The title for the pull request (mandatory)
+ * @param {string} options.body The message for the pull request (mandatory)
+ * @param {string} options.head The branch from which to pull (mandatory)
+ * @param {string} options.base The branch to which to merge (mandatory)
+ *
+ * @return {Promise<*>} The response from GitHub
+ */
+async function pullRequest(options) {
+  const { title, body, head, base } = options;
+
+  return github({
+    url: 'pulls',
+    method: 'POST',
+    body: { title, body, head, base },
+  })
+  .catch(error => {
+    console.error('ERROR:', error);
+    process.exit(1);
+  });
+}
+
+module.exports = { github, isPullRequest, pullRequest };

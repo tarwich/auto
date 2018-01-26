@@ -60,7 +60,7 @@ const setupGitSsh = new Promise(async () => {
  * @return {Promise} A promise that will be resolved with the output of the
  *         `git commit` command
  */
-function commit(files, options) {
+function commit(files, options = {}) {
   // Expand the options into things that can go on the command-line
   const expanded = Object.keys(options).reduce((result, k) =>
     result.concat((k.length === 1 ? '-' : '--') + k)
@@ -73,13 +73,23 @@ function commit(files, options) {
 /**
  * Push any commits to origin
  *
+ * @param {string} remote The remote to push to (default: origin)
+ * @param {string} branch The branch to push to (default: HEAD)
+ * @param {object} options CLI options with the same keys as cli arguments, such
+ *        as force for --force
+ *
  * @return {Promise} A promise that will be resolved with the result of the
  * command
  */
-async function push() {
+async function push(remote = 'origin', branch = 'HEAD', options = {}) {
   await setupGitSsh;
+  // Expand the options into things that can go on the command-line
+  const expanded = Object.keys(options).reduce((result, k) =>
+    result.concat((k.length === 1 ? '-' : '--') + k)
+    .concat((options[k] === '' || options[k] === true) ? [] : options[k])
+  , []);
   // Need to install the key
-  return exec('git', ['push', 'origin', 'HEAD']);
+  return exec('git', ['push', 'origin', 'HEAD', ...expanded]);
 }
 
 module.exports = { commit, push };

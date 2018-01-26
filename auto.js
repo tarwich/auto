@@ -1,5 +1,5 @@
 const { github, isPullRequest } = require('./github');
-const { commit } = require('./git');
+const { commit, push } = require('./git');
 const { exec } = require('./exec');
 
 module.exports = {
@@ -7,4 +7,5 @@ module.exports = {
   exec,
   github,
   isPullRequest,
+  push,
 };
