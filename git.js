@@ -1,4 +1,4 @@
-const { appendFileSync, mkdir, mkdtempSync, readFile, writeFileSync } = require('fs');
+const { appendFileSync, mkdir, mkdtempSync, readFile, writeFile } = require('fs');
 const { dirname, join, resolve } = require('path');
 const { tmpdir } = require('os');
 const { exec } = require('./exec');
@@ -6,6 +6,7 @@ const { promisify } = require('util');
 
 const readFileP = promisify(readFile);
 const mkdirPromise = promisify(mkdir);
+const writeFileP = promisify(writeFile);
 
 const {
   GH_KEY,
@@ -19,7 +20,7 @@ const KNOWN_HOSTS = `${HOME}/.ssh/known_hosts`;
 // Immediately setup SSH for git
 const setupGitSsh = (async () => {
   // Create the SSH deploy key
-  writeFileSync(ID_RSA, GH_KEY.replace(/\\n/g, '\n'), { mode: 0o400 });
+  await writeFileP(ID_RSA, GH_KEY.replace(/\\n/g, '\n'), { mode: 0o400 });
 
   // Create the .ssh directory if needed
   await mkdirPromise(dirname(SSH_CONFIG))
@@ -44,6 +45,7 @@ const setupGitSsh = (async () => {
   (oldIndex === -1) oldIndex = hosts.length;
 
   hosts.splice(oldIndex, 1, hostData);
+  await writeFileP(SSH_CONFIG, hosts.join('\n\n'));
 
   // Add github.com to known_hosts
   if (!/\bgithub.com\b/i.test((await readFileP(KNOWN_HOSTS).catch(() => '')))) {
