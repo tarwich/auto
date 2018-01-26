@@ -46,7 +46,7 @@ const setupGitSsh = (async () => {
   hosts.splice(oldIndex, 1, hostData);
 
   // Add github.com to known_hosts
-  if (!/\bgithub.com\b/i.test((await readFileP(KNOWN_HOSTS)).catch(() => ''))) {
+  if (!/\bgithub.com\b/i.test((await readFileP(KNOWN_HOSTS).catch(() => '')))) {
     appendFileSync(
       KNOWN_HOSTS,
       'github.com,192.30.252.*,192.30.253.*,192.30.254.*,192.30.255.* ssh-rsa' +
