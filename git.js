@@ -22,7 +22,11 @@ const setupGitSsh = (async () => {
   writeFileSync(ID_RSA, GH_KEY.replace(/\\n/g, '\n'), { mode: 0o400 });
 
   // Create the .ssh directory if needed
-  await mkdirPromise(dirname(SSH_CONFIG));
+  await mkdirPromise(dirname(SSH_CONFIG))
+  .catch(error => {
+    // Ignore EEXIST
+    if (error.code !== 'EEXIST') throw error;
+  });
   // Load the existing ssh config
   const data = await readFileP(SSH_CONFIG, 'UTF-8') || '';
   const hostData = `Host autorelease
