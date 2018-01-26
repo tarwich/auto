@@ -5,7 +5,7 @@ const { exec } = require('./exec');
 const { promisify } = require('util');
 
 const readFileP = promisify(readFile);
-const mkdirPromise = promisify(readFile);
+const mkdirPromise = promisify(mkdir);
 
 const {
   GH_KEY,
@@ -17,7 +17,7 @@ const SSH_CONFIG = `${HOME}/.ssh/config`;
 const KNOWN_HOSTS = `${HOME}/.ssh/known_hosts`;
 
 // Immediately setup SSH for git
-const setupGitSsh = new Promise(async () => {
+const setupGitSsh = (async () => {
   // Create the SSH deploy key
   writeFileSync(ID_RSA, GH_KEY.replace(/\\n/g, '\n'), { mode: 0o400 });
 
@@ -51,7 +51,7 @@ const setupGitSsh = new Promise(async () => {
       'XA8VJiS5ap43JXiUFFAaQ=='
     );
   }
-});
+})();
 
 /**
  * Commit the files specified
