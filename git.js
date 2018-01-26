@@ -121,7 +121,7 @@ async function push(remote = 'origin', branch = 'HEAD', options = {}) {
     .concat((options[k] === '' || options[k] === true) ? [] : options[k])
   , []);
   // Need to install the key
-  return exec('git', ['push', 'origin', 'HEAD', ...expanded]);
+  return exec('git', ['push', remote, branch, ...expanded]);
 }
 
 module.exports = { commit, config, push };
