@@ -71,6 +71,26 @@ function commit(files, options = {}) {
 }
 
 /**
+ * Set the git config
+ *
+ * @param {*} config Object of key/value pairs for config
+ * @param {*} options Additional CLI options for the config command
+ *
+ * @return {Promise<string>} The result of the CLI command
+ */
+async function config(config, options = {}) {
+  // Expand the options into things that can go on the command-line
+  const expanded = Object.keys(options).reduce((result, k) =>
+    result.concat((k.length === 1 ? '-' : '--') + k)
+    .concat(options[k] === '' ? [] : options[k])
+  , []);
+
+  return Promise.all(Object.keys(config).map(key =>
+    exec('git', ['config', ...expanded, key, config[key]])
+  ));
+}
+
+/**
  * Push any commits to origin
  *
  * @param {string} remote The remote to push to (default: origin)
@@ -92,4 +112,4 @@ async function push(remote = 'origin', branch = 'HEAD', options = {}) {
   return exec('git', ['push', 'origin', 'HEAD', ...expanded]);
 }
 
-module.exports = { commit, push };
+module.exports = { commit, config, push };
