@@ -53,10 +53,12 @@ function github(options) {
 
   // Set any query parameters
   for (const key of Object.keys(qs)) fullUrl.searchParams.set(key, qs[key]);
+  // Setup body
+  const body = options.body && JSON.stringify(options.body, null, '  ');
 
-  log(fullUrl, { method, headers, body: options.body });
+  log(fullUrl, { method, headers, body });
 
-  return fetch(fullUrl.toString(), { method, headers, body: options.body })
+  return fetch(fullUrl.toString(), { method, headers, body })
   .then(result => {
     if (/application\/json/i.test(result.headers.get('content-type')))
       return result.json();
