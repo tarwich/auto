@@ -1,4 +1,7 @@
 const { spawn } = require('child_process');
+const debug = require('debug');
+
+const log = debug('exec');
 
 /**
  * Execute a program and return the results in a promise
@@ -15,6 +18,7 @@ function exec(program, args = [], options = {}) {
     let stdout = '';
     let stderr = '';
 
+    log({ program, args, options });
     const child = spawn(program, args, options);
 
     child.stdout.on('data', data => {
