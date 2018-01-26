@@ -28,7 +28,10 @@ const setupGitSsh = (async () => {
     if (error.code !== 'EEXIST') throw error;
   });
   // Load the existing ssh config
-  const data = await readFileP(SSH_CONFIG, 'UTF-8') || '';
+  const data = await readFileP(SSH_CONFIG, 'UTF-8').catch(error => {
+    if (error.code === 'ENOENT') return '';
+    throw error;
+  }) || '';
   const hostData = `Host autorelease
     User git
     HostName github.com
