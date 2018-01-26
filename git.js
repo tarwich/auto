@@ -2,9 +2,9 @@ const { appendFileSync, mkdtempSync, readFile, writeFileSync } = require('fs');
 const { join, resolve } = require('path');
 const { tmpdir } = require('os');
 const { exec } = require('./exec');
-const { toPromise } = require('util');
+const { promisify } = require('util');
 
-const readFileP = toPromise(readFile);
+const readFileP = promisify(readFile);
 
 const {
   GH_KEY,
