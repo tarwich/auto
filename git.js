@@ -1,7 +1,7 @@
 const { appendFileSync, mkdir, mkdtempSync, readFile, writeFile } = require('fs');
 const { dirname, join, resolve } = require('path');
 const { tmpdir } = require('os');
-const { exec } = require('./exec');
+const { exec, objectToArguments } = require('./exec');
 const { promisify } = require('util');
 
 const readFileP = promisify(readFile);
@@ -74,10 +74,7 @@ const setupGitSsh = (async () => {
  */
 function commit(files, options = {}) {
   // Expand the options into things that can go on the command-line
-  const expanded = Object.keys(options).reduce((result, k) =>
-    result.concat((k.length === 1 ? '-' : '--') + k)
-    .concat(options[k] === '' ? [] : options[k])
-  , []);
+  const expanded = objectToArguments(options);
 
   return exec('git', ['commit', ...files, ...expanded]);
 }
@@ -92,10 +89,7 @@ function commit(files, options = {}) {
  */
 async function config(config, options = {}) {
   // Expand the options into things that can go on the command-line
-  const expanded = Object.keys(options).reduce((result, k) =>
-    result.concat((k.length === 1 ? '-' : '--') + k)
-    .concat(options[k] === '' ? [] : options[k])
-  , []);
+  const expanded = objectToArguments(options);
 
   return Promise.all(Object.keys(config).map(key =>
     exec('git', ['config', ...expanded, key, config[key]])
@@ -116,10 +110,7 @@ async function config(config, options = {}) {
 async function push(remote = 'origin', branch = 'HEAD', options = {}) {
   await setupGitSsh;
   // Expand the options into things that can go on the command-line
-  const expanded = Object.keys(options).reduce((result, k) =>
-    result.concat((k.length === 1 ? '-' : '--') + k)
-    .concat((options[k] === '' || options[k] === true) ? [] : options[k])
-  , []);
+  const expanded = objectToArguments(options);
   // Need to install the key
   return exec('git', ['push', remote, branch, ...expanded]);
 }
