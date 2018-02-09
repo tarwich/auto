@@ -17,8 +17,26 @@ const ID_RSA = resolve(GIT_SSH_DIR, 'id_rsa');
 const SSH_CONFIG = `${HOME}/.ssh/config`;
 const KNOWN_HOSTS = `${HOME}/.ssh/known_hosts`;
 
+/**
+ * Creates a function that will always return the result from the first time it
+ * is called
+ *
+ * This is similar to memoization, but doesn't track input and doesn't vary with
+ * input
+ *
+ * @param {Function} callback The function to call
+ */
+function once(callback) {
+  const local = {};
+
+  return (...rest) => {
+    if (!('result' in local)) local.result = callback(...rest);
+    return local.result;
+  };
+}
+
 // Immediately setup SSH for git
-const setupGitSsh = (async () => {
+const setupGitSsh = once(async () => {
   // Create the SSH deploy key
   await writeFileP(ID_RSA, GH_KEY.replace(/\\n/g, '\n'), { mode: 0o400 });
 
@@ -60,7 +78,7 @@ const setupGitSsh = (async () => {
       'XA8VJiS5ap43JXiUFFAaQ=='
     );
   }
-})();
+});
 
 /**
  * Commit the files specified
@@ -108,7 +126,7 @@ async function config(config, options = {}) {
  * command
  */
 async function push(remote = 'origin', branch = 'HEAD', options = {}) {
-  await setupGitSsh;
+  await setupGitSsh();
   // Expand the options into things that can go on the command-line
   const expanded = objectToArguments(options);
   // Need to install the key
