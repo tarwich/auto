@@ -29,7 +29,7 @@ const KNOWN_HOSTS = `${HOME}/.ssh/known_hosts`;
 function once(callback) {
   const local = {};
 
-  return (...rest) => {
+  return async (...rest) => {
     if (!('result' in local)) local.result = await callback(...rest);
     return local.result;
   };
