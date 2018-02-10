@@ -30,7 +30,7 @@ function once(callback) {
   const local = {};
 
   return (...rest) => {
-    if (!('result' in local)) local.result = callback(...rest);
+    if (!('result' in local)) local.result = await callback(...rest);
     return local.result;
   };
 }
