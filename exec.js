@@ -22,10 +22,10 @@ function exec(program, args = [], options = {}) {
     const child = spawn(program, args, options);
 
     child.stdout.on('data', data => {
-      stdout += data.toString('ascii');
+      stdout += data.toString('utf-8');
     });
     child.stderr.on('data', data => {
-      stderr += data.toString('ascii');
+      stderr += data.toString('utf-8');
     });
     child.on('close', code => {
       if (code) reject(stderr);
