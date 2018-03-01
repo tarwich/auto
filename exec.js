@@ -1,7 +1,7 @@
 const { spawn } = require('child_process');
 const debug = require('debug');
 
-const log = debug('exec');
+const log = debug('autorelease:exec');
 
 /**
  * Execute a program and return the results in a promise
