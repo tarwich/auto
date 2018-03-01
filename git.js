@@ -1,7 +1,7 @@
 const { appendFileSync, mkdir, mkdtempSync, readFile, writeFile } = require('fs');
 const { dirname, join, resolve } = require('path');
 const { tmpdir } = require('os');
-const { exec } = require('./exec');
+const { exec, objectToArguments } = require('./exec');
 const { promisify } = require('util');
 
 const readFileP = promisify(readFile);
@@ -17,8 +17,63 @@ const ID_RSA = resolve(GIT_SSH_DIR, 'id_rsa');
 const SSH_CONFIG = `${HOME}/.ssh/config`;
 const KNOWN_HOSTS = `${HOME}/.ssh/known_hosts`;
 
-// Immediately setup SSH for git
-const setupGitSsh = (async () => {
+/**
+ * Commit the files specified
+ *
+ * @param {string[]} files The files to commit (can be any .gitignore pattern)
+ * @param {object} options The options to pass to the command
+ * @param {string} options.message The commit message
+ *
+ * @return {Promise} A promise that will be resolved with the output of the
+ *         `git commit` command
+ */
+function commit(files, options = {}) {
+  // Expand the options into things that can go on the command-line
+  const expanded = objectToArguments(options);
+
+  return exec('git', ['commit', ...files, ...expanded]);
+}
+
+/**
+ * Set the git config
+ *
+ * @param {*} config Object of key/value pairs for config
+ * @param {*} options Additional CLI options for the config command
+ *
+ * @return {Promise<string>} The result of the CLI command
+ */
+async function config(config, options = {}) {
+  // Expand the options into things that can go on the command-line
+  const expanded = objectToArguments(options);
+
+  return Promise.all(Object.keys(config).map(key =>
+    exec('git', ['config', ...expanded, key, config[key]])
+  ));
+}
+
+/**
+ * Push any commits to origin
+ *
+ * @param {string} remote The remote to push to (default: origin)
+ * @param {string} branch The branch to push to (default: HEAD)
+ * @param {object} options CLI options with the same keys as cli arguments, such
+ *        as force for --force
+ *
+ * @return {Promise} A promise that will be resolved with the result of the
+ * command
+ */
+async function push(remote = 'origin', branch = 'HEAD', options = {}) {
+  await setupGitSsh();
+  // Expand the options into things that can go on the command-line
+  const expanded = objectToArguments(options);
+  // Need to install the key
+  return exec('git', ['push', remote, branch, ...expanded]);
+}
+
+/**
+ * Setup the ssh configs to allow git push to work
+ */
+async function setupGitSsh() {
   // Create the SSH deploy key
   await writeFileP(ID_RSA, GH_KEY.replace(/\\n/g, '\n'), { mode: 0o400 });
 
@@ -60,68 +115,6 @@ const setupGitSsh = (async () => {
       'XA8VJiS5ap43JXiUFFAaQ=='
     );
   }
-})();
-
-/**
- * Commit the files specified
- *
- * @param {string[]} files The files to commit (can be any .gitignore pattern)
- * @param {object} options The options to pass to the command
- * @param {string} options.message The commit message
- *
- * @return {Promise} A promise that will be resolved with the output of the
- *         `git commit` command
- */
-function commit(files, options = {}) {
-  // Expand the options into things that can go on the command-line
-  const expanded = Object.keys(options).reduce((result, k) =>
-    result.concat((k.length === 1 ? '-' : '--') + k)
-    .concat(options[k] === '' ? [] : options[k])
-  , []);
-
-  return exec('git', ['commit', ...files, ...expanded]);
 }
 
-/**
- * Set the git config
- *
- * @param {*} config Object of key/value pairs for config
- * @param {*} options Additional CLI options for the config command
- *
- * @return {Promise<string>} The result of the CLI command
- */
-async function config(config, options = {}) {
-  // Expand the options into things that can go on the command-line
-  const expanded = Object.keys(options).reduce((result, k) =>
-    result.concat((k.length === 1 ? '-' : '--') + k)
-    .concat(options[k] === '' ? [] : options[k])
-  , []);
-
-  return Promise.all(Object.keys(config).map(key =>
-    exec('git', ['config', ...expanded, key, config[key]])
-  ));
-}
-
-/**
- * Push any commits to origin
- *
- * @param {string} remote The remote to push to (default: origin)
- * @param {string} branch The branch to push to (default: HEAD)
- * @param {object} options CLI options with the same keys as cli arguments, such
- *        as force for --force
- *
- * @return {Promise} A promise that will be resolved with the result of the
- * command
- */
-async function push(remote = 'origin', branch = 'HEAD', options = {}) {
-  await setupGitSsh;
-  // Expand the options into things that can go on the command-line
-  const expanded = Object.keys(options).reduce((result, k) =>
-    result.concat((k.length === 1 ? '-' : '--') + k)
-    .concat((options[k] === '' || options[k] === true) ? [] : options[k])
-  , []);
-  // Need to install the key
-  return exec('git', ['push', remote, branch, ...expanded]);
-}
-
-module.exports = { commit, config, push };
+module.exports = { commit, config, push, setupGitSsh };

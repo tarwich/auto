@@ -22,10 +22,10 @@ function exec(program, args = [], options = {}) {
     const child = spawn(program, args, options);
 
     child.stdout.on('data', data => {
-      stdout += data.toString('ascii');
+      stdout += data.toString('utf-8');
     });
     child.stderr.on('data', data => {
-      stderr += data.toString('ascii');
+      stderr += data.toString('utf-8');
     });
     child.on('close', code => {
       if (code) reject(stderr);
@@ -34,4 +34,23 @@ function exec(program, args = [], options = {}) {
   });
 }
 
-module.exports = { exec };
+/**
+ * Take an object and convert to CLI arguments
+ *
+ * This function will take an object of key/value pairs like {foo: 'bar'} and
+ * converts it to an array of ['--foo', 'bar'] so that it can be passed into CLI
+ * arguments
+ *
+ * @param {object} options key/value pairs to convert to CLI arguments
+ *
+ * @return {string[]} Array of string values to pass into CLI arguments
+ */
+function objectToArguments(options) {
+  // Expand the options into things that can go on the command-line
+  return Object.keys(options).reduce((result, k) =>
+    result.concat((k.length === 1 ? '-' : '--') + k)
+    .concat((options[k] === '' || options[k] === true) ? [] : options[k])
+  , []);
+}
+
+module.exports = { exec, objectToArguments };

@@ -1,6 +1,6 @@
 const { github, isPullRequest, pullRequest } = require('./github');
-const { commit, config, push } = require('./git');
-const { exec } = require('./exec');
+const { commit, config, push, setupGitSsh } = require('./git');
+const { exec, objectToArguments } = require('./exec');
 
 module.exports = {
   commit,
@@ -8,6 +8,8 @@ module.exports = {
   exec,
   github,
   isPullRequest,
+  objectToArguments,
   pullRequest,
   push,
+  setupGitSsh,
 };
