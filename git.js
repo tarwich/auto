@@ -52,25 +52,6 @@ async function config(config, options = {}) {
 }
 
 /**
- * Push any commits to origin
- *
- * @param {string} remote The remote to push to (default: origin)
- * @param {string} branch The branch to push to (default: HEAD)
- * @param {object} options CLI options with the same keys as cli arguments, such
- *        as force for --force
- *
- * @return {Promise} A promise that will be resolved with the result of the
- * command
- */
-async function push(remote = 'origin', branch = 'HEAD', options = {}) {
-  await setupGitSsh();
-  // Expand the options into things that can go on the command-line
-  const expanded = objectToArguments(options);
-  // Need to install the key
-  return exec('git', ['push', remote, branch, ...expanded]);
-}
-
-/**
  * Setup the ssh configs to allow git push to work
  */
 async function setupGitSsh() {
@@ -115,6 +96,25 @@ async function setupGitSsh() {
       'XA8VJiS5ap43JXiUFFAaQ=='
     );
   }
+}
+
+/**
+ * Push any commits to origin
+ *
+ * @param {string} remote The remote to push to (default: origin)
+ * @param {string} branch The branch to push to (default: HEAD)
+ * @param {object} options CLI options with the same keys as cli arguments, such
+ *        as force for --force
+ *
+ * @return {Promise} A promise that will be resolved with the result of the
+ * command
+ */
+async function push(remote = 'origin', branch = 'HEAD', options = {}) {
+  await setupGitSsh();
+  // Expand the options into things that can go on the command-line
+  const expanded = objectToArguments(options);
+  // Need to install the key
+  return exec('git', ['push', remote, branch, ...expanded]);
 }
 
 module.exports = { commit, config, push, setupGitSsh };

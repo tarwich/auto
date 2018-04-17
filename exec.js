@@ -28,7 +28,7 @@ function exec(program, args = [], options = {}) {
       stderr += data.toString('utf-8');
     });
     child.on('close', code => {
-      if (code) reject(stderr);
+      if (code) reject(`${stdout}\n\n${stderr}`);
       else resolve(stdout);
     });
   });
