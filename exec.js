@@ -19,10 +19,10 @@ function exec(program, args = [], options = {}) {
     let stderr = '';
 
     log({ program, args, options });
-    const child = spawn(program, args, {
-      env: process.env,
-      ...options,
-    });
+    const child = spawn(program, args, Object.assign(
+      options,
+      { env: process.env },
+    ));
 
     child.stdout.on('data', data => {
       stdout += data.toString('utf-8');
