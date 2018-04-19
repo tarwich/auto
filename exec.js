@@ -15,8 +15,7 @@ const log = debug('autorelease:exec');
  */
 function exec(program, args = [], options = {}) {
   return new Promise((resolve, reject) => {
-    let stdout = '';
-    let stderr = '';
+    let result = '';
 
     log({ program, args, options });
     const child = spawn(program, args, Object.assign(
@@ -25,14 +24,14 @@ function exec(program, args = [], options = {}) {
     ));
 
     child.stdout.on('data', data => {
-      stdout += data.toString('utf-8');
+      result += data.toString('utf-8');
     });
     child.stderr.on('data', data => {
-      stderr += data.toString('utf-8');
+      result += data.toString('utf-8');
     });
     child.on('close', code => {
-      if (code) reject(`${stdout}\n\n${stderr}`);
-      else resolve(stdout);
+      if (code) reject(result);
+      else resolve(result);
     });
   });
 }
