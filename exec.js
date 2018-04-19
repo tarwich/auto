@@ -20,8 +20,8 @@ function exec(program, args = [], options = {}) {
 
     log({ program, args, options });
     const child = spawn(program, args, Object.assign(
-      options,
       { env: process.env },
+      options,
     ));
 
     child.stdout.on('data', data => {
