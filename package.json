@@ -2,11 +2,16 @@
   "name": "auto",
   "version": "1.0.0",
   "description": "Some automation help for wercker",
-  "main": "auto.js",
-  "scripts": {},
+  "main": "index.js",
   "keywords": [],
   "author": "Samuel Dillow",
   "license": "MIT",
+  "bin": {
+    "auto": "bin/auto.js"
+  },
+  "scripts": {
+    "auto": "node ./bin/auto"
+  },
   "dependencies": {
     "debug": "^3.1.0",
     "node-fetch": "^1.7.3"
