@@ -23,22 +23,7 @@ const jsonToString = pojo => `${JSON.stringify(pojo, null, '  ')}\n`;
 
 process.env.NODE_ENV = 'release';
 
-let NO_BUILD = false;
-
 debug('OUT_FOLDER: %o', OUT_FOLDER);
-
-for (let i = 2; i < process.argv.length; ++i) {
-  const arg = process.argv[i];
-
-  switch (arg) {
-    case '--no-build':
-    case '--nobuild':
-      NO_BUILD = true;
-      break;
-    default:
-      throw new Error('Invalid Argument ' + arg);
-  }
-}
 
 /** Main entry point for the script */
 async function main() {
@@ -67,18 +52,15 @@ async function main() {
   // Make the build folder
   await mkdirpP(OUT_FOLDER);
   // Make web pack do the build
-  if (NO_BUILD) console.log('Not building, because NO_BUILD is set');
-  else {
-    debug('Running webpack...');
-    const webpackResults = await webpackP(require(resolve('webpack.config.js')));
-    const jsonResults = webpackResults.toJson();
-    console.log(webpackResults.toString({ colors: true }));
-    if (jsonResults.errors.length) {
-      console.log(jsonResults.errors.join('\n\n'));
-      process.exit(1);
-    }
-    await exec('git', ['add', OUT_FOLDER]);
+  debug('Running webpack...');
+  const webpackResults = await webpackP(require(resolve('webpack.config.js')));
+  const jsonResults = webpackResults.toJson();
+  console.log(webpackResults.toString({ colors: true }));
+  if (jsonResults.errors.length) {
+    console.log(jsonResults.errors.join('\n\n'));
+    process.exit(1);
   }
+  await exec('git', ['add', OUT_FOLDER]);
 
   //
   // Update dist/package.json
