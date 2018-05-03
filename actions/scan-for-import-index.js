@@ -6,7 +6,7 @@ const readdirP = promisify(readdir);
 const readFileP = promisify(readFile);
 const statP = promisify(stat);
 
-const RE_INDEX = /import.*from.*(index|"conversation-chart)/i;
+const RE_INDEX = /import.*from.*(\bindex\b|[\./]+["']).*/ig;
 
 /**
  * Process dir and all its subdirectories for import problems
@@ -28,7 +28,7 @@ async function processDir(dir) {
       const matches = data.match(RE_INDEX);
 
       if (matches) {
-        console.error(`${fullFile}: File contains an index import: \n${matches[0]}`);
+        console.error(`${fullFile}: File contains an index import: \n${matches.join('\n')}`);
         process.exitCode = 1;
       }
     }
