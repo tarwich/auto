@@ -147,6 +147,12 @@ async function preRelease() {
 
   console.log(await exec('git', ['status']));
 
+  // Force add all files in the dist directory
+  const addResult = await exec('git', ['add',
+    '-f',
+    'dist',
+  ]);
+
   // Create the git commit
   const commitResult = await exec('git', ['commit',
     '-a',
