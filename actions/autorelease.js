@@ -120,6 +120,37 @@ async function createOrUpdatePullRequest(base, version) {
 }
 
 /**
+ * Check the pull request for the current run and make sure that if there is an
+ * open pull request, that it is not pointed to master
+ */
+async function makeSureThePullRequestIsNotToMaster() {
+  // It's ok if it comes from a release branch
+  if (WERCKER_GIT_BRANCH === 'release' || WERCKER_GIT_BRANCH === 'pre-release')
+    return;
+
+  const [existingPullRequest] = await github({
+    url: 'pulls',
+    qs: {
+      head: `${WERCKER_GIT_OWNER}:${WERCKER_GIT_BRANCH}`,
+      base: 'master',
+      state: 'open',
+    },
+  });
+
+  if (existingPullRequest) {
+    console.log(`
+      There is an open pull request for this branch that is pointed to master.
+      Please change the base of that pull request, and restart this build. The
+      pull request is at: ${existingPullRequest.url}
+
+      Once you have fixed that pull request, you will need to manually restart
+      this build in wercker, or push another commit to the branch.
+    `);
+    throw new Error('Invalid base branch in open pull request');
+  }
+}
+
+/**
  * Entry point function
  *
  * @return {Promise<void>} A promise just for the sake of making this function
@@ -139,6 +170,10 @@ async function preRelease() {
   });
   await exec('git', ['fetch']);
   await exec('git', ['checkout', WERCKER_GIT_BRANCH]);
+
+  // Check to see if this pull request is going to master, and if it is, then
+  // reject it automatically
+  await makeSureThePullRequestIsNotToMaster();
 
   // Don't run if the commit was from this script
   const author = await exec('git', ['log', '-n', '1', '--pretty=format:%an']);
