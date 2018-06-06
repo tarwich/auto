@@ -108,7 +108,7 @@ async function createOrUpdatePullRequest(base, version) {
     console.log(`Updating pull request title for ${base}`);
     console.log(await github({
       method: 'PATCH',
-      url: `pulls/${existingPullRequest.id}`,
+      url: `pulls/${existingPullRequest.number}`,
       body: {
         title: `Release ${version} (${base})`,
         body: `Auto build of release ${version}`,
