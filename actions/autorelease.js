@@ -40,7 +40,7 @@ process.env.GH_OWNER = process.env.WERCKER_GIT_OWNER;
 process.env.GH_REPO = process.env.WERCKER_GIT_REPOSITORY;
 process.env.GH_TOKEN = process.env.AUTORELEASE_TOKEN;
 
-const { config: gitConfig, exec, github, setupGitSsh } = require('auto');
+const { config: gitConfig, exec, github, pullRequest, setupGitSsh } = require('auto');
 const { diff } = require('semver');
 const { inspect, promisify } = require('util');
 const { readFile, writeFile } = require('fs');
@@ -71,7 +71,7 @@ const {
  */
 async function createOrUpdatePullRequest(base, version) {
   console.log(`Creating pull request to ${base}`);
-  const [pullRequest] = await github({
+  const [existingPullRequest] = await github({
     url: 'pulls',
     qs: {
       head: `${WERCKER_GIT_OWNER}:${WERCKER_GIT_BRANCH}`,
@@ -83,11 +83,11 @@ async function createOrUpdatePullRequest(base, version) {
     console.error('ERROR:', error);
     process.exit(1);
   });
-  console.log(pullRequest);
+  console.log(existingPullRequest);
 
   // Create the pull request if needed
   //
-  if (!pullRequest) {
+  if (!existingPullRequest) {
     console.log(`Creating pull request to ${base}`);
     console.log(await pullRequest({
       title: `Release ${version} (${base})`,
@@ -99,7 +99,7 @@ async function createOrUpdatePullRequest(base, version) {
 
   // Pull request exists and is ok
   //
-  else if (pullRequest.title === `Release ${version} (${base})`)
+  else if (existingPullRequest.title === `Release ${version} (${base})`)
     console.log(`Pull request to ${base} exists`);
 
   // If the pull request exists, make sure the title is right
@@ -108,7 +108,7 @@ async function createOrUpdatePullRequest(base, version) {
     console.log(`Updating pull request title for ${base}`);
     console.log(await github({
       method: 'PATCH',
-      url: `pulls/${pullRequest.id}`,
+      url: `pulls/${existingPullRequest.id}`,
       body: {
         title: `Release ${version} (${base})`,
         body: `Auto build of release ${version}`,
