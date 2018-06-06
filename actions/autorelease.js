@@ -87,7 +87,7 @@ async function createOrUpdatePullRequest(base, version) {
 
   // Create the pull request if needed
   //
-  if (pullRequest) {
+  if (!pullRequest) {
     console.log(`Creating pull request to ${base}`);
     console.log(await pullRequest({
       title: `Release ${version} (${base})`,
