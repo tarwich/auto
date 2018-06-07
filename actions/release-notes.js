@@ -110,6 +110,13 @@ Try ${process.argv[0]} ${process.argv[1]} (major|minor|patch)`);
   let releaseNotes = await readFileP(RELEASE_NOTES_PATH, { encoding: 'utf-8' })
   .catch(() => '# Release Notes\n\n');
 
+  // If the next version is already in the release notes, then abort updating
+  // the release notes
+  if (new RegExp(`^##\s*${NEXT_VERSION}`, 'i').test(releaseNotes)) {
+    console.log('Next version already in release notes. Refusing to update the release notes.');
+    return;
+  }
+
   releaseNotes = releaseNotes.replace(/(?=##|$)/, `${newNotes}\n\n`);
   await writeFileP(RELEASE_NOTES_PATH, releaseNotes);
 
