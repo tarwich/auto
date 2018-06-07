@@ -256,8 +256,8 @@ async function preRelease() {
     '-m', `Release ${NEXT_VERSION}`,
   ])
   .catch(error => {
-  // Swallow this error message
-    if (!/nothing to commit/i.test(error.message)) throw error;
+    // Swallow this error message
+    if (!/nothing to commit/i.test(error.message || error)) throw error;
   });
   console.log(commitResult);
   console.log(await exec('git', ['status']));
