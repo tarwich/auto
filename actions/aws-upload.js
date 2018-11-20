@@ -53,32 +53,47 @@ const {
  * Tars the specified directory's CONTENTS (not the directory itself).
  */
 async function tarDirectory(directory, toPath) {
-  const fileExists = await exists(directory);
+  // Make our path resolve to an absolute path
+  toPath = path.resolve(toPath);
+  // Store the current working directory so we can return to it with no issue
+  const cwd = process.cwd();
 
-  if (!fileExists) {
-    throw new Error(`AWS Upload Error: A directory was specified that does not exist: ${directory}`);
+  try {
+    const fileExists = await exists(directory);
+
+    if (!fileExists) {
+      throw new Error(`AWS Upload Error: A directory was specified that does not exist: ${directory}`);
+    }
+
+    const stat = await lstat(directory);
+
+    if (!stat.isDirectory()) {
+      throw new Error('AWS Upload Error: Can not TAR a file directly. Please specify a directory who\'s contents should be tarred and uploaded');
+    }
+
+    // Move our process to the directory so we can tar with a '.' path thus making the tar grab the contents
+    // of the directory and not tar a long list of directories into the tar.
+    process.chdir(directory);
+
+    // Prep our params for the tar operation, we want to mimick 'tar czf ./file,.tgz  [files]'
+    const params = {
+      gzip: true,
+      file: path.resolve(toPath),
+    };
+
+    console.log('Tarring directory:', process.cwd());
+    console.log('Writing tar to:', toPath);
+
+    // Tar the file
+    await tar.c(params, ['.']);
+    // Return to original working directory
+    process.chdir(cwd);
   }
 
-  const stat = await lstat(directory);
-
-  if (!stat.isDirectory()) {
-    throw new Error('AWS Upload Error: Can not TAR a file directly. Please specify a directory who\'s contents should be tarred and uploaded');
+  catch(err) {
+    process.chdir(directory);
+    throw err;
   }
-
-  // Get all of the contents of the directory to be tarred
-  const directoryContents = await readdir(directory);
-  // Make sure they are fully qualified paths
-  const paths = directoryContents.map(itemPath => path.resolve(directory, itemPath));
-
-  // Prep our params for the tar operation, we want to mimick 'tar czf ./file,.tgz  [files]'
-  const params = {
-    gzip: true,
-  };
-
-  // Tar the file
-  await tar.c(params, paths)
-  // Pipe the output to the output filepath
-  .pipe(fs.createWriteStream(path.resolve(toPath)))
 }
 
 /**
