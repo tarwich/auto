@@ -17,6 +17,8 @@
     "node-fetch": "^1.7.3"
   },
   "devDependencies": {
-    "eslint-config-voidray": "github:voidrayco/eslint-config-voidray"
+    "aws-sdk": "2.358.0",
+    "eslint-config-voidray": "github:voidrayco/eslint-config-voidray",
+    "tar": "4.4.8"
   }
 }
