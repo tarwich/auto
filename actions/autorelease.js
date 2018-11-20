@@ -294,6 +294,8 @@ async function awsUpload() {
   console.log('\n------AWS Upload------');
 
   // Tar the dist folder contents and upload to S3 so projects can reference the library
+  // We get the Bucket Key and Resource Path from AWS_BUCKET but we provide the file name
+  // dynamically from this process.
   await upload({
     awsFileName: `${packageJson.version}.tar.gz`,
     directory: DIST_FOLDER,

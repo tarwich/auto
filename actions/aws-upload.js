@@ -1,3 +1,36 @@
+/**
+ * The method exported from this file is used to analyze options and environment variables
+ * to tar the contents of a directory and upload the tarball to an AWS S3 file system.
+ *
+ * This is an example to use this method straight from the command line (fish shell):
+ *
+ * env
+ *  TEST=true
+ *  AWS_ACCESS_KEY_ID=<insert your AWS access key here>
+ *  AWS_SECRET_ACCESS_KEY=<insert your AWS secret access key here>
+ *  AWS_PUBLIC=<set this to true to make the uploaded file public>
+ *  AWS_BUCKET=<set this to bucketName/path/to/file/filename.tar.gz
+ *  AWS_UPLOAD=<set this to the directory you want uploaded>
+ *  AWS_TAR_PATH=<set this to the path the tar gets saved to the local disk before getting uploaded>
+ * node actions/aws-upload.js
+ *
+ * The Javascript interface is pretty simple. It follows the same security Key protocal as aws-sdk does.
+ * Thus run your program with the security key in the environment vars. The following shows an example
+ * where the environment provides the AWS resource path and the javascript provides the resource name and some
+ * other configurations. Javascript options superscedes environment options:
+ *
+ * const upload = require('./actions/aws-upload.js');
+ *
+ * upload({
+ *  // This is js config to override just the AWS resource filename and not the whole path
+ *  // thus the AWS resource will be <AWS_BUCKET>/fileName.tar.gz
+ *  awsFileName: 'fileName.tar.gz',
+ *  directory: resolve('directory/to/be/tarred'),
+ *  makePublic: true,
+ *  tarPath: resolve('dist.tar.gz'),
+ * });
+ */
+
 const AWS = require('aws-sdk');
 const s3 = new AWS.S3();
 const fs = require('fs');
