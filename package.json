@@ -19,6 +19,6 @@
     "tar": "4.4.8"
   },
   "devDependencies": {
-    "eslint-config-voidray": "github:voidrayco/eslint-config-voidray",
+    "eslint-config-voidray": "github:voidrayco/eslint-config-voidray"
   }
 }
