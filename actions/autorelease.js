@@ -275,6 +275,38 @@ async function preRelease() {
 }
 
 /**
+ * Function to release the distribution to aws if AWS properties were provided
+ */
+async function awsUpload() {
+  const packageJson = require(resolve('package.json'));
+  const upload = require('./aws-upload');
+  const DIST_FOLDER = resolve('dist');
+
+  const {
+    AWS_BUCKET
+  } = process.env;
+
+  // We only attempt an upload if the AWS_BUCKET is specified
+  if (!AWS_BUCKET) {
+    return;
+  }
+
+  console.log('\n------AWS Upload------');
+
+  // Tar the dist folder contents and upload to S3 so projects can reference the library
+  // We get the Bucket Key and Resource Path from AWS_BUCKET but we provide the file name
+  // dynamically from this process.
+  await upload({
+    awsFileName: `${packageJson.version}.tar`,
+    directory: DIST_FOLDER,
+    makePublic: true,
+    tarPath: resolve('dist.tar'),
+  });
+
+  console.log('AWS Upload complete');
+}
+
+/**
  * Function to cut the release in GitHub and update the release notes
  *
  * @return {Promise} A promise that will be resolved when the release is
@@ -328,6 +360,7 @@ process.on('unhandledRejection', error => {
 });
 
 preRelease()
+.then(awsUpload)
 .then(release)
 .catch(error => {
   console.error('ERROR:', error.stack || error);
