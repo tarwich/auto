@@ -10,7 +10,7 @@
  *  AWS_SECRET_ACCESS_KEY=<insert your AWS secret access key here>
  *  AWS_PUBLIC=<set this to true to make the uploaded file public>
  *  AWS_BUCKET=<set this to bucketName/path/to/file/filename.tar.gz
- *  AWS_UPLOAD=<set this to the directory you want uploaded>
+ *  AWS_UPLOAD_SOURCE=<set this to the directory you want uploaded>
  *  AWS_TAR_PATH=<set this to the path the tar gets saved to the local disk before getting uploaded>
  * node actions/aws-upload.js
  *
@@ -40,7 +40,6 @@ const util = require('util');
 
 const exists = util.promisify(fs.exists);
 const lstat = util.promisify(fs.lstat);
-const readdir = util.promisify(fs.readdir);
 const createBucket = util.promisify(s3.createBucket.bind(s3));
 const putObject = util.promisify(s3.putObject.bind(s3));
 const readFile = util.promisify(fs.readFile);
@@ -111,7 +110,7 @@ async function tarDirectory(directory, toPath) {
  * AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
  *
  * This supports taking the file path to upload as a parameter or from the environment var:
- * AWS_UPLOAD
+ * AWS_UPLOAD_SOURCE
  *
  * This is the path
  * AWS_TAR_PATH
@@ -128,7 +127,7 @@ async function awsTarUpload(options = {}) {
     // <bucket name>/<path to file>
     AWS_BUCKET,
     // This should be provided to indicate which directory to upload
-    AWS_UPLOAD,
+    AWS_UPLOAD_SOURCE,
     // The path of the tar file's save location
     AWS_TAR_PATH,
     // When set, makes the uploaded file public
@@ -138,7 +137,7 @@ async function awsTarUpload(options = {}) {
   const {
     awsFileName = '',
     bucketPath = AWS_BUCKET || '',
-    directory = AWS_UPLOAD || '',
+    directory = AWS_UPLOAD_SOURCE || '',
     makePublic = Boolean(AWS_PUBLIC),
     tarPath = AWS_TAR_PATH || '',
   } = options;
@@ -146,7 +145,7 @@ async function awsTarUpload(options = {}) {
   // Split the path so we can use the start as the bucket name and the rest as the file pathing
   const bucketPathing = bucketPath.split('\/');
   // This is the selected path for uploading to the system
-  const pathToUpload = directory || AWS_UPLOAD;
+  const pathToUpload = directory || AWS_UPLOAD_SOURCE;
 
   // Bucket names must be unique across all S3 users
   const myBucket = bucketPathing[0];
@@ -160,8 +159,7 @@ async function awsTarUpload(options = {}) {
 
   // Validate all inputs for the process
   if (!bucketPath || !bucketPathing || !pathToUpload) {
-    reject(new Error(`All needed inputs for the AWS upload were not provided or invalid. bucket: ${myBucket}, bucketPath: ${myKey}, toUpload: ${pathToUpload}`));
-    return;
+    throw new Error(`All needed inputs for the AWS upload were not provided or invalid. bucket: ${myBucket}, bucketPath: ${myKey}, toUpload: ${pathToUpload}`);
   }
 
   // Tar the specified directory
