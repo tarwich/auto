@@ -3,7 +3,7 @@ process.env.IS_RELEASE = true;
 
 const { exec } = require('auto');
 const { resolve } = require('path');
-const { writeFile } = require('fs-extra');
+const { writeFile } = require('fs');
 const { promisify } = require('util');
 const debug = require('debug')('release.js');
 const mkdirp = require('mkdirp');

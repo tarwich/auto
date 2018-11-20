@@ -51,11 +51,104 @@ const writeFileP = promisify(writeFile);
 
 // Import environment variables
 const {
-  AUTORELEASE_BASE = 'master',
   WERCKER_GIT_BRANCH,
   WERCKER_GIT_OWNER,
   WERCKER_GIT_REPOSITORY,
 } = process.env;
+
+/**
+ * Create a pull request into the destination branch
+ *
+ * If the pull request does not exist, then it will be created.
+ *
+ * If the pull request exists, and the title is wrong, then it will be updated.
+ *
+ * If the pull request exists, and the title is correct, then nothing will be
+ * done.
+ *
+ * @param {string} base The branch into which the pull request will go
+ * @param {string} version The version of this pull request
+ */
+async function createOrUpdatePullRequest(base, version) {
+  console.log(`Creating pull request to ${base}`);
+  const [existingPullRequest] = await github({
+    url: 'pulls',
+    qs: {
+      head: `${WERCKER_GIT_OWNER}:${WERCKER_GIT_BRANCH}`,
+      base: base,
+      state: 'open',
+    },
+  })
+  .catch(error => {
+    console.error('ERROR:', error);
+    process.exit(1);
+  });
+  console.log(existingPullRequest);
+
+  // Create the pull request if needed
+  //
+  if (!existingPullRequest) {
+    console.log(`Creating pull request to ${base}`);
+    console.log(await pullRequest({
+      title: `Release ${version} (${base})`,
+      body: `Auto build of release ${version}`,
+      head: WERCKER_GIT_BRANCH,
+      base,
+    }));
+  }
+
+  // Pull request exists and is ok
+  //
+  else if (existingPullRequest.title === `Release ${version} (${base})`)
+    console.log(`Pull request to ${base} exists`);
+
+  // If the pull request exists, make sure the title is right
+  //
+  else {
+    console.log(`Updating pull request title for ${base}`);
+    console.log(await github({
+      method: 'PATCH',
+      url: `pulls/${existingPullRequest.number}`,
+      body: {
+        title: `Release ${version} (${base})`,
+        body: `Auto build of release ${version}`,
+        head: WERCKER_GIT_BRANCH,
+        base,
+      },
+    }));
+  }
+}
+
+/**
+ * Check the pull request for the current run and make sure that if there is an
+ * open pull request, that it is not pointed to master
+ */
+async function makeSureThePullRequestIsNotToMaster() {
+  // It's ok if it comes from a release branch
+  if (WERCKER_GIT_BRANCH === 'release' || WERCKER_GIT_BRANCH === 'pre-release')
+    return;
+
+  const [existingPullRequest] = await github({
+    url: 'pulls',
+    qs: {
+      head: `${WERCKER_GIT_OWNER}:${WERCKER_GIT_BRANCH}`,
+      base: 'master',
+      state: 'open',
+    },
+  });
+
+  if (existingPullRequest) {
+    console.log(`
+      There is an open pull request for this branch that is pointed to master.
+      Please change the base of that pull request, and restart this build. The
+      pull request is at: ${existingPullRequest.url}
+
+      Once you have fixed that pull request, you will need to manually restart
+      this build in wercker, or push another commit to the branch.
+    `);
+    throw new Error('Invalid base branch in open pull request');
+  }
+}
 
 /**
  * Entry point function
@@ -77,6 +170,10 @@ async function preRelease() {
   });
   await exec('git', ['fetch']);
   await exec('git', ['checkout', WERCKER_GIT_BRANCH]);
+
+  // Check to see if this pull request is going to master, and if it is, then
+  // reject it automatically
+  await makeSureThePullRequestIsNotToMaster();
 
   // Don't run if the commit was from this script
   const author = await exec('git', ['log', '-n', '1', '--pretty=format:%an']);
@@ -148,7 +245,7 @@ async function preRelease() {
   console.log(await exec('git', ['status']));
 
   // Force add all files in the dist directory
-  const addResult = await exec('git', ['add',
+  await exec('git', ['add',
     '-f',
     'dist',
   ]);
@@ -159,8 +256,8 @@ async function preRelease() {
     '-m', `Release ${NEXT_VERSION}`,
   ])
   .catch(error => {
-  // Swallow this error message
-    if (!/nothing to commit/i.test(error.message)) throw error;
+    // Swallow this error message
+    if (!/nothing to commit/i.test(error.message || error)) throw error;
   });
   console.log(commitResult);
   console.log(await exec('git', ['status']));
@@ -172,43 +269,9 @@ async function preRelease() {
   // Check if the request exists already
   console.log('Checking for a pre-existing pull request');
 
-  const pullRequests = await github({
-    url: 'pulls',
-    qs: {
-      head: `${WERCKER_GIT_OWNER}:${WERCKER_GIT_BRANCH}`,
-      base: `${AUTORELEASE_BASE}`,
-      state: 'open',
-    },
-  })
-  .catch(error => {
-    console.error('ERROR:', error);
-    process.exit(1);
-  });
-
-  console.log(pullRequests);
-
-  if (pullRequests.length) console.log('Pull request already exist. Not making a new one.');
-
-  // Create the pull request
-  if (pullRequests.length === 0) {
-    console.log('Creating pull request to dev');
-
-    console.log(await pullRequest({
-      title: `Release ${NEXT_VERSION} (dev)`,
-      body: `Auto build of release ${NEXT_VERSION}`,
-      head: WERCKER_GIT_BRANCH,
-      base: 'dev',
-    }));
-
-    console.log('Creating pull request to master');
-
-    console.log(await pullRequest({
-      title: `Release ${NEXT_VERSION} (master)`,
-      body: `Auto build of release ${NEXT_VERSION}`,
-      head: WERCKER_GIT_BRANCH,
-      base: 'master',
-    }));
-  }
+  // Pull requests
+  await createOrUpdatePullRequest('dev', NEXT_VERSION);
+  await createOrUpdatePullRequest('master', NEXT_VERSION);
 }
 
 /**
