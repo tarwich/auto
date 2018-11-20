@@ -297,10 +297,10 @@ async function awsUpload() {
   // We get the Bucket Key and Resource Path from AWS_BUCKET but we provide the file name
   // dynamically from this process.
   await upload({
-    awsFileName: `${packageJson.version}.tar.gz`,
+    awsFileName: `${packageJson.version}.tar`,
     directory: DIST_FOLDER,
     makePublic: true,
-    tarPath: resolve('dist.tar.gz'),
+    tarPath: resolve('dist.tar'),
   });
 
   console.log('AWS Upload complete');
