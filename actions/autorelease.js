@@ -291,13 +291,17 @@ async function awsUpload() {
     return;
   }
 
+  console.log('\n------AWS Upload------');
+
   // Tar the dist folder contents and upload to S3 so projects can reference the library
-  upload({
+  await upload({
     awsFileName: `${packageJson.version}.tar.gz`,
     directory: DIST_FOLDER,
     makePublic: true,
     tarPath: resolve('dist.tar.gz'),
   });
+
+  console.log('AWS Upload complete');
 }
 
 /**
